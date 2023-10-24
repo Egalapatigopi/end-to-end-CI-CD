@@ -56,7 +56,9 @@ pipeline{
         stage('Building image') {
             steps{
               script {
-                sh "docker build -t gopi1998/vprofileapp:v${BUILD_NUMBER} ."
+                withCredentials([string(credentialsId: 'dockerhub_pwd', variable: 'Docker_pwd')]) {
+                       sh "docker build -t gopi1998/vprofileapp:v${BUILD_NUMBER} ."
+                    }
               }
             }
         }
@@ -66,8 +68,8 @@ pipeline{
                     withCredentials([string(credentialsId: 'dockerhub_pwd', variable: 'Docker_pwd')]) {
                     sh '''
                     docker login -u gopi1998 -p ${Docker_pwd}
-                    dockerImage.push("v$BUILD_NUMBER")
-                    dockerImage.push('latest')
+                    docker push gopi1998/todoapp:v${BUILD_NUMBER}
+                    docker push gopi1998/todoapp:latest
                     '''
                     }
                 }
