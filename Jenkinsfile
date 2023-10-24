@@ -7,10 +7,9 @@ pipeline {
     }
 */
     environment {
-        registry = "imranvisualpath/vproappdock"
-        registryCredential = 'dockerhub'
+        registry = "gopi1998/vprofileapp"
+        registryCredential = 'dockerhub_pwd'
     }
-
     stages{
 
         stage('BUILD'){
@@ -47,12 +46,10 @@ pipeline {
                 }
             }
         }
-
-
         stage('Building image') {
             steps{
               script {
-                dockerImage = docker.build registry + ":$BUILD_NUMBER"
+                dockerImage = docker.build registry + ":v$BUILD_NUMBER"
               }
             }
         }
@@ -61,7 +58,7 @@ pipeline {
           steps{
             script {
               docker.withRegistry( '', registryCredential ) {
-                dockerImage.push("$BUILD_NUMBER")
+                dockerImage.push("v$BUILD_NUMBER")
                 dockerImage.push('latest')
               }
             }
@@ -70,7 +67,7 @@ pipeline {
 
         stage('Remove Unused docker image') {
           steps{
-            sh "docker rmi $registry:$BUILD_NUMBER"
+            sh "docker rmi $registry:v$BUILD_NUMBER"
           }
         }
 

@@ -1,0 +1,89 @@
+pipeline{
+    agent any
+
+    environment {
+        registry = "gopi1998/vprofileapp"
+        registryCredential = 'dockerhub_pwd'
+    }
+    stages{
+        stage('Checkout'){
+            steps{
+                checkout scmGit(branches: [[name: '*/main']], 
+                extensions: [],
+                userRemoteConfigs: [[url: 'https://github.com/Egalapatigopi/end-to-end-CI-CD.git']])
+            }
+        }
+        stage('Build'){
+            steps{
+                sh 'mvn clean install -DskipTests'
+            }
+            post {
+               success {
+                 // Archive the build artifacts (e.g., JAR files, WAR files, etc.)
+                archiveArtifacts '**/target/*.war'
+               }
+            }
+        }
+        stage('Unit test'){
+            steps{
+                sh 'mvn test'
+            }
+        }
+        stage('Code analysis with checkstyle'){
+            steps{
+                sh 'mvn checkstyle:checkstyle'
+            }
+            post{
+                success{
+                    echo 'Genareted test result'
+                }
+            }
+        }
+        stage('Code analysis with sonar'){
+            environment {
+                scannerHome = tool "sonar4.7"
+            }
+            steps{
+                  withSonarQubeEnv('sonar'){
+                  sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+                   -Dsonar.projectName=vprofile-repo \
+                   -Dsonar.projectVersion=3.0 \
+                   -Dsonar.sources=src/ \
+                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                }
+            }
+        }
+        stage('Quality gate'){
+            steps{
+                timeout(time: 10, unit: 'MINUTES') {
+               waitForQualityGate abortPipeline: true
+               }
+            }
+        }
+        stage('Deploy Image') {
+          steps{
+            script {
+              docker.withRegistry( '', registryCredential ) {
+                dockerImage.push("v$BUILD_NUMBER")
+                dockerImage.push('latest')
+              }
+            }
+          }
+        }
+        stage('Remove unused docker images'){
+            steps{
+                sh "docker rmi $registry:v$BUILD_NUMBER"
+            }
+        }
+        stage('Kubernetes Deploy'){
+            steps{
+                kubectl create namespace prod
+                sh "helm upgrade --install --force vproifle-stack helm/vprofilecharts --set appimage=${registry}:v${BUILD_NUMBER} --namespace prod"
+            }
+        }
+    }
+}
+            
