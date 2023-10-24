@@ -65,15 +65,18 @@ pipeline{
               }
             }
         }
-        stage('Deploy Image') {
-          steps{
-            script {
-              docker.withRegistry( '', registryCredential ) {
-                dockerImage.push("v$BUILD_NUMBER")
-                dockerImage.push('latest')
-              }
+        stage('Push the artifacts'){
+           steps{
+               script{
+                    withCredentials([string(credentialsId: 'dockerhub_pwd', variable: 'Docker_pwd')]) {
+                    sh '''
+                    docker login -u gopi1998 -p ${Docker_pwd}
+                    dockerImage.push("v$BUILD_NUMBER")
+                    dockerImage.push('latest')
+                    '''
+                    }
+                }
             }
-          }
         }
         stage('Remove unused docker images'){
             steps{
