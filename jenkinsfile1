@@ -56,7 +56,7 @@ pipeline{
         stage('Building image') {
             steps{
               script {
-                sh "docker build -t gopi1998/vprofileapp:v${BUILD_NUMBER}"
+                sh "docker build -t gopi1998/vprofileapp:v${BUILD_NUMBER} ."
               }
             }
         }
