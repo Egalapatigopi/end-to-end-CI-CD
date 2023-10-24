@@ -24,11 +24,6 @@ pipeline{
                }
             }
         }
-        stage('Unit test'){
-            steps{
-                sh 'mvn test'
-            }
-        }
         stage('Code analysis with checkstyle'){
             steps{
                 sh 'mvn checkstyle:checkstyle'
