@@ -1,4 +1,4 @@
-Project Title: Continuous Integration and Deployment with Jenkins, Maven, SonarQube, Docker, Helm, and Kubernetes (K8s) using Jenkins Master and Kops VM
+Project Title: vprofile project 
 
 Project Description:
 In this project, I have implimented Continuous Integration (CI) and Continuous Deployment (CD) pipeline using Jenkins, Maven, SonarQube, Docker, Helm, and Kubernetes (K8s). This pipeline allowed for the seamless and automated deployment of application code to a Kubernetes cluster hosted on Kops VMs.
