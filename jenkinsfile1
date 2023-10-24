@@ -87,7 +87,7 @@ pipeline{
         }
         stage('Kubernetes Deploy'){
             steps{
-                kubectl create namespace prod
+                sh 'kubectl create namespace prod'
                 sh "helm upgrade --install --force vproifle-stack helm/vprofilecharts --set appimage=${registry}:v${BUILD_NUMBER} --namespace prod"
             }
         }
