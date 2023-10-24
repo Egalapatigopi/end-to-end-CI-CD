@@ -8,7 +8,7 @@ pipeline{
                 userRemoteConfigs: [[url: 'https://github.com/Egalapatigopi/end-to-end-CI-CD.git']])
             }
         }
-        stage('Build'){
+        stage('BUILD'){
             steps{
                 sh 'mvn clean install -DskipTests'
             }
@@ -17,6 +17,17 @@ pipeline{
                  // Archive the build artifacts (e.g., JAR files, WAR files, etc.)
                 archiveArtifacts '**/target/*.war'
                }
+            }
+        }
+        stage('UNIT TEST'){
+            steps {
+                sh 'mvn test'
+            }
+        }
+
+        stage('INTEGRATION TEST'){
+            steps {
+                sh 'mvn verify -DskipUnitTests'
             }
         }
         stage('Code analysis with checkstyle'){
@@ -29,40 +40,14 @@ pipeline{
                 }
             }
         }
-        /* stage('Code analysis with sonar'){
-            environment {
-                scannerHome = tool "sonar4.7"
-            }
-            steps{
-                  withSonarQubeEnv('sonar'){
-                  sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
-                   -Dsonar.projectName=vprofile-repo \
-                   -Dsonar.projectVersion=3.0 \
-                   -Dsonar.sources=src/ \
-                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
-                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
-                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
-                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
-                }
-            }
-        }
-        stage('Quality gate'){
-            steps{
-                timeout(time: 10, unit: 'MINUTES') {
-               waitForQualityGate abortPipeline: true
-               }
-            }
-        }*/
         stage('Building image') {
             steps{
               script {
-                withCredentials([string(credentialsId: 'dockerhub_pwd', variable: 'Docker_pwd')]) {
-                       sh "docker build -t gopi1998/vprofileapp:v${BUILD_NUMBER} ."
-                    }
+                sh "docker build -t gopi1998/vprofileapp:v${BUILD_NUMBER} ."
               }
             }
         }
-        stage('Push the artifacts'){
+        stage('Deploy Images'){
            steps{
                script{
                     withCredentials([string(credentialsId: 'dockerhub_pwd', variable: 'Docker_pwd')]) {
@@ -78,6 +63,23 @@ pipeline{
         stage('Remove unused docker images'){
             steps{
                 sh "docker rmi $registry:v$BUILD_NUMBER"
+            }
+        }
+        stage('CODE ANALASYS with SONARQUBE'){
+            environment {
+                scannerHome = tool "sonar4.7"
+            }
+            steps{
+                  withSonarQubeEnv('sonar'){
+                  sh '''${scannerHome}/bin/sonar-scanner -Dsonar.projectKey=vprofile \
+                   -Dsonar.projectName=vprofile-repo \
+                   -Dsonar.projectVersion=3.0 \
+                   -Dsonar.sources=src/ \
+                   -Dsonar.java.binaries=target/test-classes/com/visualpathit/account/controllerTest/ \
+                   -Dsonar.junit.reportsPath=target/surefire-reports/ \
+                   -Dsonar.jacoco.reportsPath=target/jacoco.exec \
+                   -Dsonar.java.checkstyle.reportPaths=target/checkstyle-result.xml'''
+                }
             }
         }
         stage('Kubernetes Deploy'){
