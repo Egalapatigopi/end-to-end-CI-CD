@@ -39,7 +39,7 @@ pipeline{
                 }
             }
         }
-        stage('Code analysis with sonar'){
+        /* stage('Code analysis with sonar'){
             environment {
                 scannerHome = tool "sonar4.7"
             }
@@ -61,6 +61,13 @@ pipeline{
                 timeout(time: 10, unit: 'MINUTES') {
                waitForQualityGate abortPipeline: true
                }
+            }
+        }*/
+        stage('Building image') {
+            steps{
+              script {
+                dockerImage = docker.build registry + ":v$BUILD_NUMBER"
+              }
             }
         }
         stage('Deploy Image') {
